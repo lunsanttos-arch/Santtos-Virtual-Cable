@@ -9,7 +9,7 @@ namespace
 
     KSPIN_LOCK g_lock;
     volatile LONG g_initialized = 0;
-    BYTE g_audio[kCapacity] = {};
+    UCHAR g_audio[kCapacity] = {};
     ULONG g_read = 0;
     ULONG g_write = 0;
     ULONG g_used = 0;
@@ -19,7 +19,7 @@ namespace
         return value - (value % SANTTOS_FRAME_BYTES);
     }
 
-    void CopyIntoRing(const BYTE* source, ULONG byteCount)
+    void CopyIntoRing(const UCHAR* source, ULONG byteCount)
     {
         const ULONG first = min(byteCount, kCapacity - g_write);
         RtlCopyMemory(g_audio + g_write, source, first);
@@ -30,7 +30,7 @@ namespace
         g_write = (g_write + byteCount) % kCapacity;
     }
 
-    void CopyFromRing(BYTE* destination, ULONG byteCount)
+    void CopyFromRing(UCHAR* destination, ULONG byteCount)
     {
         const ULONG first = min(byteCount, kCapacity - g_read);
         RtlCopyMemory(destination, g_audio + g_read, first);
@@ -70,7 +70,7 @@ void SanttosCableReset()
     KeReleaseSpinLockFromDpcLevel(&g_lock);
 }
 
-void SanttosCablePush(const BYTE* source, ULONG byteCount)
+void SanttosCablePush(const UCHAR* source, ULONG byteCount)
 {
     if (source == nullptr || InterlockedCompareExchange(&g_initialized, 2, 2) != 2)
     {
@@ -104,7 +104,7 @@ void SanttosCablePush(const BYTE* source, ULONG byteCount)
     KeReleaseSpinLockFromDpcLevel(&g_lock);
 }
 
-void SanttosCablePop(BYTE* destination, ULONG byteCount)
+void SanttosCablePop(UCHAR* destination, ULONG byteCount)
 {
     if (destination == nullptr || byteCount == 0)
     {
@@ -129,4 +129,3 @@ void SanttosCablePop(BYTE* destination, ULONG byteCount)
         RtlZeroMemory(destination + available, byteCount - available);
     }
 }
-
