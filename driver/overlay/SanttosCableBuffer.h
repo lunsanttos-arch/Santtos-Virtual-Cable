@@ -7,6 +7,5 @@ constexpr ULONG SANTTOS_FRAME_BYTES = 8;
 
 void SanttosCableInitialize();
 void SanttosCableReset();
-void SanttosCablePush(_In_reads_bytes_(byteCount) const BYTE* source, ULONG byteCount);
-void SanttosCablePop(_Out_writes_bytes_(byteCount) BYTE* destination, ULONG byteCount);
-
+void SanttosCablePush(_In_reads_bytes_(byteCount) const UCHAR* source, ULONG byteCount);
+void SanttosCablePop(_Out_writes_bytes_(byteCount) UCHAR* destination, ULONG byteCount);
