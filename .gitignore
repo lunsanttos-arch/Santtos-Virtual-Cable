@@ -1,0 +1,11 @@
+build/
+artifact/
+*.exe
+*.pdb
+*.ilk
+*.obj
+*.sys
+*.cat
+*.log
+.vs/
+
