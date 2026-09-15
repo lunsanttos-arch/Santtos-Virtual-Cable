@@ -43,6 +43,7 @@ Replace-Checked $stream '        m_SaveData.WriteData(m_pDmaBuffer + bufferOffse
 
 $project = Join-Path $main 'Main.vcxproj'
 Replace-Checked $project '    <ClCompile Include="minwavertstream.cpp" />' "    <ClCompile Include=`"minwavertstream.cpp`" />`r`n    <ClCompile Include=`"SanttosCableBuffer.cpp`" />"
+Replace-Checked $project '<TargetName>SimpleAudioSample</TargetName>' '<TargetName>SanttosVirtualCable</TargetName>'
 
 $speaker = Join-Path $filters 'speakerwavtable.h'
 Replace-Checked $speaker '48KHz, 16-bit, stereo (PCM and NON-PCM)' '48KHz, 32-bit, stereo IEEE Float'
@@ -72,6 +73,10 @@ Replace-Checked $inf 'SIMPLEAUDIOSAMPLE.TopologySpeaker.szPname="Simple Audio Sa
 Replace-Checked $inf 'SIMPLEAUDIOSAMPLE.WaveMicArray1.szPname="Simple Audio Sample Wave Microphone Array - Front"' 'SIMPLEAUDIOSAMPLE.WaveMicArray1.szPname="Santtos Cable Output"'
 Replace-Checked $inf 'SIMPLEAUDIOSAMPLE.TopologyMicArray1.szPname="Simple Audio Sample Topology Microphone Array - Front"' 'SIMPLEAUDIOSAMPLE.TopologyMicArray1.szPname="Santtos Cable Output"'
 Replace-Checked $inf 'MicArray1CustomName= "Internal Microphone Array - Front"' 'MicArray1CustomName= "Santtos Cable Output"'
+$infText = [IO.File]::ReadAllText($inf)
+$infText = $infText.Replace('SimpleAudioSample', 'SanttosVirtualCable')
+$infText = $infText.Replace('simpleaudiosample', 'SanttosVirtualCable')
+[IO.File]::WriteAllText($inf, $infText, [Text.UTF8Encoding]::new($false))
+Move-Item $inf (Join-Path $main 'SanttosVirtualCable.inx') -Force
 
 Write-Host 'Santtos WaveRT overlay applied successfully.'
-
