@@ -1,4 +1,5 @@
 #define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 #include <windows.h>
 
 #include "SpscAudioRingBuffer.hpp"
@@ -94,4 +95,3 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
                 MB_OK | (result.passed ? MB_ICONINFORMATION : MB_ICONERROR));
     return result.passed ? 0 : 1;
 }
-
