@@ -1,0 +1,47 @@
+name: Windows Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: windows-2022
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure MSVC release build
+        run: cmake -S . -B build -A x64 -DCMAKE_BUILD_TYPE=Release
+
+      - name: Compile
+        run: cmake --build build --config Release --parallel
+
+      - name: Run automated audio tests
+        run: ctest --test-dir build -C Release --output-on-failure
+
+      - name: Stage Windows executable
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifact | Out-Null
+          Copy-Item build/Release/SanttosCableDiagnostics.exe artifact/
+          Copy-Item README.md artifact/
+          Copy-Item docs/QUALITY_TEST_REPORT.md artifact/
+          Get-FileHash artifact/SanttosCableDiagnostics.exe -Algorithm SHA256 |
+            Format-List | Out-File artifact/SHA256.txt
+
+      - name: Upload executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: Santtos-Virtual-Cable-Windows-x64
+          path: artifact/
+          if-no-files-found: error
+          retention-days: 30
+
