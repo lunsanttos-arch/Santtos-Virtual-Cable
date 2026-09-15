@@ -73,8 +73,10 @@ jobs:
           if (-not ($wanted | Where-Object Extension -eq '.inf')) { throw 'INF was not produced.' }
           $wanted | Copy-Item -Destination $stage.FullName -Force
           Copy-Item ./santtos/driver/README.md $stage.FullName
-          Get-FileHash ($stage.FullName + '/*') -Algorithm SHA256 |
-            Format-Table -AutoSize | Out-File ($stage.FullName + '/SHA256SUMS.txt') -Encoding utf8
+          $hashes = Get-ChildItem $stage.FullName -File |
+            Get-FileHash -Algorithm SHA256 |
+            Format-Table -AutoSize | Out-String
+          $hashes | Out-File ($stage.FullName + '/SHA256SUMS.txt') -Encoding utf8
           Get-ChildItem $stage.FullName | Format-Table Name,Length
 
       - name: Upload engineering driver package
