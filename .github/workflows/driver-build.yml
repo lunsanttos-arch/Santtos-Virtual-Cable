@@ -1,0 +1,80 @@
+name: Build WaveRT driver
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - driver/wavert-prototype
+    paths:
+      - 'driver/**'
+      - '.github/workflows/driver-build.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build-driver:
+    runs-on: windows-2025-vs2026
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out Santtos source
+        uses: actions/checkout@v4
+        with:
+          path: santtos
+
+      - name: Check out Microsoft driver samples
+        uses: actions/checkout@v4
+        with:
+          repository: microsoft/Windows-driver-samples
+          ref: 97429c5623590d52f001249460daf43e6749d777
+          path: windows-driver-samples
+
+      - name: Apply Santtos WaveRT overlay
+        shell: pwsh
+        run: |
+          ./santtos/driver/patch-simple-audio-sample.ps1 `
+            -SampleRoot ./windows-driver-samples/audio/simpleaudiosample `
+            -OverlayRoot ./santtos/driver/overlay
+
+      - name: Restore official SDK and WDK NuGet packages
+        shell: pwsh
+        working-directory: windows-driver-samples
+        run: nuget restore ./packages.config -PackagesDirectory ./packages
+
+      - name: Build Release x64 driver package
+        shell: pwsh
+        working-directory: windows-driver-samples
+        env:
+          WDS_Configuration: Release
+          WDS_Platform: x64
+        run: |
+          ./Build-Samples.ps1 `
+            -Samples 'audio.simpleaudiosample' `
+            -Configurations Release `
+            -Platforms x64 `
+            -RunMode NuGet `
+            -ThrottleLimit 1 `
+            -Verbose
+
+      - name: Stage driver package and build evidence
+        shell: pwsh
+        run: |
+          $stage = New-Item -ItemType Directory -Force ./stage
+          $wanted = Get-ChildItem ./windows-driver-samples/audio/simpleaudiosample -Recurse -File |
+            Where-Object { $_.Extension -in '.sys', '.inf', '.cat', '.cer' }
+          if (-not ($wanted | Where-Object Extension -eq '.sys')) { throw 'Driver binary was not produced.' }
+          if (-not ($wanted | Where-Object Extension -eq '.inf')) { throw 'INF was not produced.' }
+          $wanted | Copy-Item -Destination $stage.FullName -Force
+          Copy-Item ./santtos/driver/README.md $stage.FullName
+          Get-FileHash ($stage.FullName + '/*') -Algorithm SHA256 |
+            Format-Table -AutoSize | Out-File ($stage.FullName + '/SHA256SUMS.txt') -Encoding utf8
+          Get-ChildItem $stage.FullName | Format-Table Name,Length
+
+      - name: Upload engineering driver package
+        uses: actions/upload-artifact@v4
+        with:
+          name: Santtos-Virtual-Cable-WaveRT-x64-engineering
+          path: stage
+          if-no-files-found: error
+          retention-days: 14
