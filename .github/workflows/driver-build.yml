@@ -2,6 +2,12 @@ name: Build WaveRT driver
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'driver/**'
+      - '.github/workflows/driver-build.yml'
   push:
     branches:
       - driver/wavert-prototype
