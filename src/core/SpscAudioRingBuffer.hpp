@@ -44,7 +44,7 @@ public:
         auto read = readFrame_.load(std::memory_order_acquire);
 
         const auto used = static_cast<std::size_t>(write - read);
-        const auto free = capacityFrames_ - std::min(used, capacityFrames_);
+        const auto free = capacityFrames_ - (std::min)(used, capacityFrames_);
         if (frames > free) {
             overflowFrames_.fetch_add(frames - free, std::memory_order_relaxed);
             frames = free;
@@ -62,7 +62,7 @@ public:
         auto read = readFrame_.load(std::memory_order_relaxed);
         const auto write = writeFrame_.load(std::memory_order_acquire);
         const auto available = static_cast<std::size_t>(write - read);
-        const auto copied = std::min(frames, available);
+        const auto copied = (std::min)(frames, available);
 
         auto* destinationBytes = static_cast<std::byte*>(destination);
         copyFromRing(destinationBytes, read, copied);
@@ -96,7 +96,7 @@ private:
                       std::uint64_t absoluteFrame,
                       std::size_t frames) noexcept {
         const auto offset = static_cast<std::size_t>(absoluteFrame % capacityFrames_);
-        const auto first = std::min(frames, capacityFrames_ - offset);
+        const auto first = (std::min)(frames, capacityFrames_ - offset);
         std::memcpy(storage_.data() + offset * frameBytes_, source,
                     first * frameBytes_);
         std::memcpy(storage_.data(), source + first * frameBytes_,
@@ -107,7 +107,7 @@ private:
                       std::uint64_t absoluteFrame,
                       std::size_t frames) noexcept {
         const auto offset = static_cast<std::size_t>(absoluteFrame % capacityFrames_);
-        const auto first = std::min(frames, capacityFrames_ - offset);
+        const auto first = (std::min)(frames, capacityFrames_ - offset);
         std::memcpy(destination, storage_.data() + offset * frameBytes_,
                     first * frameBytes_);
         std::memcpy(destination + first * frameBytes_, storage_.data(),
